@@ -2620,9 +2620,17 @@ LEPT_DLL extern l_uint8 * zlibUncompress ( l_uint8 *datain, size_t nin, size_t *
 
 local lib
 if not pcall(function()
+  -- Win32 debug
   lib = ffi.load 'liblept168d'
-end) then
+end) and not pcall(function()
+  -- Win32 release
   lib = ffi.load 'liblept168'
+end) and not pcall(function()
+  -- MacPorts
+  lib = ffi.load '/opt/local/lib/liblept.dylib'
+end) then
+  -- Generic
+  lib = ffi.load 'lept'
 end
 
 local iLiblept = {}
