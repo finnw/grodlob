@@ -1,0 +1,23 @@
+local W = require 'winapi'
+
+require 'winapi.mmap'
+
+local mDibSlab = {}
+local DibSlab = setmetatable({}, mDibSlab)
+local iDibSlab = {__index=DibSlab}
+
+function mDibSlab:__call(capacity)
+  self = {}
+  self.capacity = assert(tonumber(capacity))
+  self.nextOffset = 0
+  setmetatable(self, iDibSlab)
+end
+
+function DibSlab:createDIBSection(hdc, bmi, usage)
+  local hbmp, bits = W.CreateDIBSection(hdc, bmi, usage, self.section, self.nextOffset)
+  local bitmap = ffi.new 'BITMAP'
+  W.GetObject(hbmp, bitmap, ffi.sizeof(bitmap))
+  local bump = bitmap.bmWidthBytes * math.abs(bitmap.)
+end
+
+return DibSlab
