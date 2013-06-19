@@ -1,14 +1,23 @@
 local ffi = require 'ffi'
 local ffiu = require 'ffiu'
 local liblept = require 'liblept'
-local prof = require 'prof'
+local prof -- Optional module
+do
+  local profOk
+  profOk, prof = pcall(require, 'prof')
+end
 local NumA = require 'lept.NumA'
 local PixA = require 'lept.PixA'
 local Pta = require 'lept.Pta'
-local W = require 'winapi'
-
-require 'winapi.window'
-require 'winapi.wingdi'
+local W
+do
+  local WOk
+  WOk, W = pcall(require, 'winapi')
+  if WOk then
+    require 'winapi.window'
+    require 'winapi.wingdi'
+  end
+end
 
 local mPix = {}
 local Pix = setmetatable({}, mPix)
@@ -25,14 +34,6 @@ local iDibHost = {__index=DibHost}
 local ctDibHost, szDibHost
 
 local clLept = getmetatable(liblept).__index
-local bmi = ffi.new('BITMAPINFO', 4)
-do
-  local bmiWords = ffi.cast('uint32_t *', bmi.bmiColors)
-  bmiWords[0] = 0xff000000
-  bmiWords[1] = 0x00ff0000
-  bmiWords[2] = 0x0000ff00
-  bmiWords[3] = 0x00000000
-end
 
 local nonNull = ffiu.nonNull
 local toPPix
@@ -73,7 +74,7 @@ local function wrap(ppix)
     self = {host = host}
     setmetatable(self, iPix)
     pixWrappers[key] = self
-    prof.update('pixMemUsed', getMemUsage(ppix))
+    if prof then prof.update('pixMemUsed', getMemUsage(ppix)) end
   end
   return self
 end
@@ -82,7 +83,7 @@ Pix.wrap = wrap
 function toPPix(pix)
   if pix == nil then
     return nil
-  elseif ffi.istype(ctPixHost, pix) or ffi.istype(ctDibHost, pix) then
+  elseif ffi.istype(ctPixHost, pix) or (W and ffi.istype(ctDibHost, pix)) then
     return nonNull(pix.handles[0])
   elseif type(pix) == 'table' and getmetatable(pix) == iPix then
     return toPPix(pix.host)
@@ -103,27 +104,38 @@ function Pix.create(width, height, depth)
   return wrap(ppix)
 end
 
-function Pix.createDIBSection(hdc, width, height)
-  local h = bmi.bmiHeader
-  h.biSize = ffi.sizeof(h)
-  h.biWidth = width
-  h.biHeight = - height
-  h.biPlanes = 1
-  h.biBitCount = 32
-  h.biCompression = W.BI_BITFIELDS
-  h.biSizeImage = width * math.abs(height) * 4
-  local hbmp, bits = W.CreateDIBSection(hdc, bmi, DIB_RGB_COLORS)
-  local pPix = clLept.pixCreateHeader(width, height, 32)
-  clLept.pixChangeRefcount(pPix, 1)
-  clLept.pixSetData(pPix, bits)
-  local self = {host = ctDibHost()}
-  self.host.handles[0] = pPix
-  prof.update('dibMemUsed', getMemUsage(pPix))
-  self.host.hbmp = hbmp;
-  setmetatable(self, iPix)
-  local key = ffi.string(self.host.handles, szPixHost) -- Only the Pix pointer is significant, not the HBITMAP
-  dibWrappers[key] = self
-  return self
+if W then
+  local bmi = ffi.new('BITMAPINFO', 4)
+  do
+    local bmiWords = ffi.cast('uint32_t *', bmi.bmiColors)
+    bmiWords[0] = 0xff000000
+    bmiWords[1] = 0x00ff0000
+    bmiWords[2] = 0x0000ff00
+    bmiWords[3] = 0x00000000
+  end
+  function Pix.createDIBSection(hdc, width, height)
+    local h = bmi.bmiHeader
+    h.biSize = ffi.sizeof(h)
+    h.biWidth = width
+    h.biHeight = - height
+    h.biPlanes = 1
+    h.biBitCount = 32
+    h.biCompression = W.BI_BITFIELDS
+    h.biSizeImage = width * math.abs(height) * 4
+    local hbmp, bits = W.CreateDIBSection(hdc, bmi, DIB_RGB_COLORS)
+    local pPix = clLept.pixCreateHeader(width, height, 32)
+    clLept.pixChangeRefcount(pPix, 1)
+    clLept.pixSetData(pPix, bits)
+    local self = {host = ctDibHost()}
+    self.host.handles[0] = pPix
+    if prof then prof.update('dibMemUsed', getMemUsage(pPix)) end
+    self.host.hbmp = hbmp;
+    setmetatable(self, iPix)
+    local key = ffi.string(self.host.handles, szPixHost) -- Only the Pix pointer is significant, not the HBITMAP
+    dibWrappers[key] = self
+    return self
+  end
+  ctDibHost = ffi.metatype('struct {struct Pix *handles[1]; HBITMAP hbmp;}', iDibHost)
 end
 
 do
@@ -259,7 +271,7 @@ local function showPix(p)
 end
 
 function iPixHost:__gc()
-  prof.update('pixMemUsed', -getMemUsage(self.handles[0]))
+  if prof then prof.update('pixMemUsed', -getMemUsage(self.handles[0])) end
   clLept.pixDestroy(self.handles)
 end
 
@@ -268,7 +280,7 @@ function iDibHost:__gc()
   clLept.pixChangeRefcount(ppix, -1)
   local newRefcount = clLept.pixGetRefcount(ppix)
   if newRefcount == 1 then
-    prof.update('dibMemUsed', -getMemUsage(ppix))
+    if prof then prof.update('dibMemUsed', -getMemUsage(ppix)) end
     clLept.pixSetData(ppix, nil)
     W.DeleteObject(self.hbmp)
     clLept.pixDestroy(self.handles)
@@ -310,7 +322,6 @@ function iPix:__tostring()
 end
 
 ctPixHost = ffi.metatype('struct {struct Pix *handles[1];}', iPixHost)
-ctDibHost = ffi.metatype('struct {struct Pix *handles[1]; HBITMAP hbmp;}', iDibHost)
 szPixHost = ffi.sizeof(ctPixHost)
 
 setmetatable(Pix, mPix)
