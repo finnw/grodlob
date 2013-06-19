@@ -12,8 +12,9 @@ local Pta = require 'lept.Pta'
 local W
 do
   local WOk
-  WOk, W = pcall(require, 'winapi')
+  WOk, theW = pcall(require, 'winapi')
   if WOk then
+    W = theW
     require 'winapi.window'
     require 'winapi.wingdi'
   end
