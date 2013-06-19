@@ -3,16 +3,15 @@ local ffiu = require 'ffiu'
 local liblept = require 'liblept'
 local prof -- Optional module
 do
-  local profOk
-  profOk, prof = pcall(require, 'prof')
+  local profOk, theProf = pcall(require, 'prof')
+  if profOk then prof = theProf end
 end
 local NumA = require 'lept.NumA'
 local PixA = require 'lept.PixA'
 local Pta = require 'lept.Pta'
 local W
 do
-  local WOk
-  WOk, theW = pcall(require, 'winapi')
+  local WOk, theW = pcall(require, 'winapi')
   if WOk then
     W = theW
     require 'winapi.window'
@@ -259,6 +258,8 @@ end
 function Pix.rotate(pixs, angle, type, incolor, width, height)
   return Pix(clLept.pixRotate(toPPix(pixs), angle, type, incolor, width or 0, height or 0))
 end
+
+Pix.toPPix = toPPix
 
 function Pix:writePng(filename, gamma)
   return clLept.pixWritePng(filename, self.host.handles[0], gamma or 0) == 0
