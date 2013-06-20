@@ -74,6 +74,24 @@ function iFPix:__gc()
   clLept.fpixDestroy(self.handles)
 end
 
+local accessors = {}
+function accessors:w()
+  return select(1, self:getDimensions())
+end
+
+function accessors:h()
+  return select(2, self:getDimensions())
+end
+
+function iFPix:__index(k)
+  local acc = accessors[k]
+  if acc then
+    return acc(self)
+  else
+    return FPix[k]
+  end
+end
+
 function iFPix:__tostring()
   local p = self.handles[0]
   if p == nil then return "<FPix @ NULL>" end

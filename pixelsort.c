@@ -1,5 +1,10 @@
-#include "yflood_common.h"
-#include "libyflood.cdef"
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "leptonica/environ.h"
+#include "leptonica/alltypes.h"
+#include "leptonica/leptprotos.h"
 
 #define MIX(x) \
     do { \
@@ -11,10 +16,16 @@
         x ^= (x) << 7; \
     } while (0)
 
-void gen_pixels(const float *base,
-                ptrdiff_t width, ptrdiff_t height,
-                ptrdiff_t xStride, ptrdiff_t yStride,
-                struct pixel *buffer)
+struct pixel
+{
+  float intensity;
+  int16_t x, y;
+};
+
+static void gen_pixels(const float *base,
+                       ptrdiff_t width, ptrdiff_t height,
+                       ptrdiff_t xStride, ptrdiff_t yStride,
+                       struct pixel *buffer)
 {
     float intensity;
     ptrdiff_t x, y;
@@ -35,7 +46,7 @@ void gen_pixels(const float *base,
     }
 }
 
-int qs_compare_pixels(const void *pv1, const void *pv2)
+static int qs_compare_pixels(const void *pv1, const void *pv2)
 {
     const struct pixel *ppx1 = (const struct pixel *)pv1,
                        *ppx2 = (const struct pixel *)pv2;
@@ -68,3 +79,14 @@ int qs_compare_pixels(const void *pv1, const void *pv2)
         }
     }
 }
+
+void grod_genSortedListFromFPix(FPIX *fpix, struct pixel *buffer)
+{
+    l_int32 width, height, wpl;
+    const l_float32 *intensities;
+    fpixGetDimensions(fpix, &width, &height);
+    wpl = fpixGetWpl(fpix);
+    gen_pixels(fpixGetData(fpix), width, height, 1, wpl, buffer);
+    qsort(buffer, width*height, sizeof (*buffer), qs_compare_pixels);
+}
+

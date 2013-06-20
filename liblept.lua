@@ -1152,12 +1152,12 @@ LEPT_DLL extern l_int32 dpixWrite ( const char *filename, DPIX *dpix );
 LEPT_DLL extern l_int32 dpixWriteStream ( FILE *fp, DPIX *dpix );
 LEPT_DLL extern DPIX * dpixEndianByteSwap ( DPIX *dpixd, DPIX *dpixs );
 LEPT_DLL extern l_int32 fpixPrintStream ( FILE *fp, FPIX *fpix, l_int32 factor );
-LEPT_DLL extern FPIX * pixConvertToFPix ( PIX *pixs, l_int32 ncomps );
-LEPT_DLL extern PIX * fpixConvertToPix ( FPIX *fpixs, l_int32 outdepth, l_int32 negvals, l_int32 errorflag );
-LEPT_DLL extern PIX * fpixDisplayMaxDynamicRange ( FPIX *fpixs );
-LEPT_DLL extern DPIX * fpixConvertToDPix ( FPIX *fpix );
-LEPT_DLL extern FPIX * dpixConvertToFPix ( DPIX *dpix );
 */
+FPIX * pixConvertToFPix ( PIX *pixs, l_int32 ncomps );
+PIX * fpixConvertToPix ( FPIX *fpixs, l_int32 outdepth, l_int32 negvals, l_int32 errorflag );
+PIX * fpixDisplayMaxDynamicRange ( FPIX *fpixs );
+DPIX * fpixConvertToDPix ( FPIX *fpix );
+FPIX * dpixConvertToFPix ( DPIX *dpix );
 l_int32 fpixGetMin(FPIX *fpix, l_float32 *pminval, l_int32 *pxminloc, l_int32 *pyminloc);
 l_int32 fpixGetMax(FPIX *fpix, l_float32 *pmaxval, l_int32 *pxmaxloc, l_int32 *pymaxloc);
 FPIX *fpixAddBorder(FPIX *fpixs, l_int32 left, l_int32 right, l_int32 top, l_int32 bot);
