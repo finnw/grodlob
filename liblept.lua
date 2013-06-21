@@ -1106,10 +1106,10 @@ l_int32 fpixGetResolution(FPIX *fpix, l_int32 *pxres, l_int32 *pyres);
 l_int32 fpixSetResolution(FPIX *fpix, l_int32 xres, l_int32 yres);
 l_int32 fpixCopyResolution(FPIX *fpixd, FPIX *fpixs);
 l_float32 *fpixGetData(FPIX *fpix);
+l_int32 fpixSetData ( FPIX *fpix, l_float32 *data );
+l_int32 fpixGetPixel ( FPIX *fpix, l_int32 x, l_int32 y, l_float32 *pval );
+l_int32 fpixSetPixel ( FPIX *fpix, l_int32 x, l_int32 y, l_float32 val );
 /*
-LEPT_DLL extern l_int32 fpixSetData ( FPIX *fpix, l_float32 *data );
-LEPT_DLL extern l_int32 fpixGetPixel ( FPIX *fpix, l_int32 x, l_int32 y, l_float32 *pval );
-LEPT_DLL extern l_int32 fpixSetPixel ( FPIX *fpix, l_int32 x, l_int32 y, l_float32 val );
 LEPT_DLL extern FPIXA * fpixaCreate ( l_int32 n );
 LEPT_DLL extern FPIXA * fpixaCopy ( FPIXA *fpixa, l_int32 copyflag );
 LEPT_DLL extern void fpixaDestroy ( FPIXA **pfpixa );
@@ -1152,12 +1152,12 @@ LEPT_DLL extern l_int32 dpixWrite ( const char *filename, DPIX *dpix );
 LEPT_DLL extern l_int32 dpixWriteStream ( FILE *fp, DPIX *dpix );
 LEPT_DLL extern DPIX * dpixEndianByteSwap ( DPIX *dpixd, DPIX *dpixs );
 LEPT_DLL extern l_int32 fpixPrintStream ( FILE *fp, FPIX *fpix, l_int32 factor );
-LEPT_DLL extern FPIX * pixConvertToFPix ( PIX *pixs, l_int32 ncomps );
-LEPT_DLL extern PIX * fpixConvertToPix ( FPIX *fpixs, l_int32 outdepth, l_int32 negvals, l_int32 errorflag );
-LEPT_DLL extern PIX * fpixDisplayMaxDynamicRange ( FPIX *fpixs );
-LEPT_DLL extern DPIX * fpixConvertToDPix ( FPIX *fpix );
-LEPT_DLL extern FPIX * dpixConvertToFPix ( DPIX *dpix );
 */
+FPIX * pixConvertToFPix ( PIX *pixs, l_int32 ncomps );
+PIX * fpixConvertToPix ( FPIX *fpixs, l_int32 outdepth, l_int32 negvals, l_int32 errorflag );
+PIX * fpixDisplayMaxDynamicRange ( FPIX *fpixs );
+DPIX * fpixConvertToDPix ( FPIX *fpix );
+FPIX * dpixConvertToFPix ( DPIX *dpix );
 l_int32 fpixGetMin(FPIX *fpix, l_float32 *pminval, l_int32 *pxminloc, l_int32 *pyminloc);
 l_int32 fpixGetMax(FPIX *fpix, l_float32 *pmaxval, l_int32 *pxmaxloc, l_int32 *pymaxloc);
 FPIX *fpixAddBorder(FPIX *fpixs, l_int32 left, l_int32 right, l_int32 top, l_int32 bot);
@@ -2139,10 +2139,12 @@ LEPT_DLL extern l_int32 lqueueExtendArray(L_QUEUE *lq);
 LEPT_DLL extern void *lqueueRemove(L_QUEUE *lq);
 LEPT_DLL extern l_int32 lqueueGetCount(L_QUEUE *lq);
 LEPT_DLL extern l_int32 lqueuePrint(FILE *fp, L_QUEUE *lq);
-LEPT_DLL extern PIX *pixRankFilter(PIX *pixs, l_int32 wf, l_int32 hf, l_float32 rank);
-LEPT_DLL extern PIX *pixRankFilterRGB(PIX *pixs, l_int32 wf, l_int32 hf, l_float32 rank);
-LEPT_DLL extern PIX *pixRankFilterGray(PIX *pixs, l_int32 wf, l_int32 hf, l_float32 rank);
-LEPT_DLL extern PIX *pixMedianFilter(PIX *pixs, l_int32 wf, l_int32 hf);
+*/
+PIX *pixRankFilter(PIX *pixs, l_int32 wf, l_int32 hf, l_float32 rank);
+PIX *pixRankFilterRGB(PIX *pixs, l_int32 wf, l_int32 hf, l_float32 rank);
+PIX *pixRankFilterGray(PIX *pixs, l_int32 wf, l_int32 hf, l_float32 rank);
+PIX *pixMedianFilter(PIX *pixs, l_int32 wf, l_int32 hf);
+/*
 LEPT_DLL extern SARRAY *pixProcessBarcodes(PIX *pixs, l_int32 format, l_int32 method, SARRAY **psaw, l_int32 debugflag);
 LEPT_DLL extern PIXA *pixExtractBarcodes(PIX *pixs, l_int32 debugflag);
 LEPT_DLL extern SARRAY *pixReadBarcodes(PIXA *pixa, l_int32 format, l_int32 method, SARRAY **psaw, l_int32 debugflag);

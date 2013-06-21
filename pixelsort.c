@@ -50,7 +50,7 @@ static void gen_pixels(const float *base,
     }
 }
 
-int qs_compare_pixels(const void *pv1, const void *pv2)
+static int qs_compare_pixels(const void *pv1, const void *pv2)
 {
     const struct pixel *ppx1 = (const struct pixel *)pv1,
                        *ppx2 = (const struct pixel *)pv2;

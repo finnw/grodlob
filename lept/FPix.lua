@@ -25,6 +25,7 @@ local function toPFPix(fpix)
     error("Invalid FPix designator: " .. tostring(fpix), 3)
   end
 end
+FPix.toPFPix = toPFPix
 
 function mFPix:__call(fpix)
   local pfpix = toPFPix(fpix)
@@ -66,12 +67,39 @@ end
 
 FPix.getHandle = toPFPix
 
+do
+  local pixelBuf = ffi.new 'float[1]'
+  function FPix:getPixel(x, y)
+    local res = clLept.fpixGetPixel(self.handles[0], x, y, pixelBuf)
+    assert(res == 0, "failed to read pixel value")
+    return pixelBuf[0]
+  end
+end
+
 function FPix:getWpl()
   return clLept.fpixGetWpl(self.handles[0])
 end
 
 function iFPix:__gc()
   clLept.fpixDestroy(self.handles)
+end
+
+local accessors = {}
+function accessors:w()
+  return select(1, self:getDimensions())
+end
+
+function accessors:h()
+  return select(2, self:getDimensions())
+end
+
+function iFPix:__index(k)
+  local acc = accessors[k]
+  if acc then
+    return acc(self)
+  else
+    return FPix[k]
+  end
 end
 
 function iFPix:__tostring()

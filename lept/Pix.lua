@@ -1,13 +1,6 @@
-local ffi = require 'ffi'
-local ffiu = require 'ffiu'
-local liblept = require 'liblept'
-local prof -- Optional module
-do
-  local profOk, theProf = pcall(require, 'prof')
-  if profOk then prof = theProf end
-end
+local FPix
 local NumA = require 'lept.NumA'
-local PixA = require 'lept.PixA'
+local PixA
 local Pta = require 'lept.Pta'
 local W
 do
@@ -17,6 +10,14 @@ do
     require 'winapi.window'
     require 'winapi.wingdi'
   end
+end
+local ffi = require 'ffi'
+local ffiu = require 'ffiu'
+local liblept = require 'liblept'
+local prof -- Optional module
+do
+  local profOk, theProf = pcall(require, 'prof')
+  if profOk then prof = theProf end
 end
 
 local mPix = {}
@@ -98,6 +99,12 @@ function Pix.convertRGBToHSV(pixd, pixs)
   return wrap(clLept.pixConvertRGBToHSV(toPPix(pixd), ppixs))
 end
 
+function Pix:convertToFPix(ncomps)
+  FPix = require 'lept.FPix'
+  local ppixs = toPPix(self)
+  return FPix(clLept.pixConvertToFPix(ppixs, ncomps))
+end
+
 function Pix.create(width, height, depth)
   local ppix = clLept.pixCreate(width, height, depth)
   assert(nonNull(ppix))
@@ -162,6 +169,7 @@ do
   initCIFlags(typeCodes)
   local none = {}
   function Pix.findHistoPeaksHSV(pixs, type, width, height, npeaks, erasefactor, wantPixA)
+    PixA = require 'lept.PixA'
     ppixa[0] = nil
     local status = clLept.pixFindHistoPeaksHSV(toPPix(pixs), typeCodes[type or none] or type, width, height, npeaks, erasefactor, ppta, pnatot, wantPixA and ppixa or nil)
     assert(status == 0, "pixFindHistoPeaksHSV failed")
@@ -233,6 +241,10 @@ do
     end
     return wrap(result)
   end
+end
+
+function Pix:rankFilterRGB(wf, hf, rank)
+  return wrap(clLept.pixRankFilterRGB(toPPix(self), wf, hf, rank))
 end
 
 function Pix:rasterop(dx, dy, dw, dh, op, src, sx, sy)
