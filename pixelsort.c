@@ -80,6 +80,7 @@ static int qs_compare_pixels(const void *pv1, const void *pv2)
     }
 }
 
+__attribute__((__visibility__("default")))
 void grod_genSortedListFromFPix(FPIX *fpix, struct pixel *buffer)
 {
     l_int32 width, height, wpl;

@@ -243,6 +243,10 @@ do
   end
 end
 
+function Pix:rankFilterRGB(wf, hf, rank)
+  return wrap(clLept.pixRankFilterRGB(toPPix(self), wf, hf, rank))
+end
+
 function Pix:rasterop(dx, dy, dw, dh, op, src, sx, sy)
   return clLept.pixRasterop(toPPix(self), dx, dy, dw, dh, op, toPPix(src), sx or 0, sy or 0)
 end

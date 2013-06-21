@@ -1,8 +1,12 @@
+local FPix = require 'lept.FPix'
 local Segment = require 'Segment'
 local UnionFind = require 'UnionFind'
 local ffi = require 'ffi'
 local liblept = require 'liblept'
 local point16 = require 'point16'
+
+local bor = bit.bor
+local max = math.max
 
 local mWatershed = {}
 local Watershed = setmetatable({}, mWatershed)
@@ -16,7 +20,7 @@ struct pixel
   int16_t x, y;
 };
 
-void grod_genSortedListFromFPix(FPIX *fpix, float *buffer);
+void grod_genSortedListFromFPix(FPIX *fpix, struct pixel *buffer);
 
 ]]
 
@@ -34,7 +38,7 @@ local szPixel = ffi.sizeof 'struct pixel'
 local function createPixelList(fpix)
   local numPixels = fpix.w * fpix.h
   local buffer = ffi.new(ctPixelList, numPixels)
-  C.grod_genSortedListFromFPix(fpix, buffer)
+  C.grod_genSortedListFromFPix(fpix:toPFPix(), buffer)
   return buffer, numPixels
 end
 
@@ -50,16 +54,16 @@ local function fillPixel(self, rank, x, y, intensity, modes)
     local pgrow = self.pgrid[ny]
     if pgrow then
       for dx = -1,1 do
-        if bit.bor(dx, dy) ~= 0 then
+        if bor(dx, dy) ~= 0 then
           local nx = x + dx
           if nx < 0 then goto BADCOL end
           local np = pgrow[nx]
           if np and (np ~= true) then
             if (not uniqueNeighbor) or (uniqueNeighbor == np) then
-              uniqueNeighbor = np
+              uniqueNeighbor = np:find()
             elseif (not modes.noMerge) and
                    self:shouldMerge(rank, x, y, intensity,
-                                    uniqueNeighbor, np, modes) then
+                                    uniqueNeighbor, np:find(), modes) then
               uniqueNeighbor = uniqueNeighbor:merge(np)
               pgrow[nx] = uniqueNeighbor
               self.pop = self.pop - 1
@@ -81,7 +85,7 @@ local function fillPixel(self, rank, x, y, intensity, modes)
   if uniqueNeighbor then
     newP = uniqueNeighbor:find()
     newP:add(Segment(x, y))
-    self.maxMass = math.max(self.maxMass, newP.val.mass)
+    self.maxMass = max(self.maxMass, newP.val.mass)
     result = extResult
   else
     newP = UnionFind(Segment(x, y))
@@ -113,24 +117,10 @@ end
 
 function Watershed:fill(modes)
   modes = modes or EMPTY
-  local gcsModes = setmetatable({adjacentTo={NaN,NaN}}, {__index=modes})
   local buffer = self.buffer
-  for j = 0, self.numPixels-1 do
+  for j = 0, (modes.limit or self.numPixels)-1 do
     local x, y = buffer[j].x, buffer[j].y
-    local cordonKey = point16.fromXY(x, y)
     local fillResult = fillPixel(self, j+1, x, y, buffer[j].intensity, modes)
-    if fillResult == 'merged' and
-       self.hasCritGuard then
-      local p = self.pgrid[y][x]:find()
-      if p.val.critical or p == self:findBorder() then
-        self:guardCriticalSegments(modes)
-      end
-    elseif fillResult == 'extended' and
-           self.hasCritGuard then
-      gcsModes.adjacentTo[1] = x
-      gcsModes.adjacentTo[2] = y
-      self:guardCriticalSegments(gcsModes)
-    end
   end
 end
 
@@ -170,7 +160,7 @@ function Watershed:setSmallSegPriority(thres, val)
       local pgrow = self.pgrid[ny]
       if pgrow then
         for dx = -1,1 do
-          if bit.bor(dx, dy) ~= 0 then
+          if bor(dx, dy) ~= 0 then
             local nx = x + dx
             local np = pgrow[nx]
             if np and np ~= true then
@@ -236,7 +226,7 @@ end
 
 function Watershed:shouldMerge(rank, x, y, intensity, p1, p2, modes)
   modes = modes or EMPTY
-  if self.fpix(x, y) > 0.9 then return true end
+  if self.fpix:getPixel(x, y) > 0.9 then return true end
   return false
 end
 

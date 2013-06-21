@@ -16,6 +16,7 @@ ffi.cdef [[
     double mass;
     double minX, maxX, minY, maxY;
     double xSum, ySum;
+    bool border;
   };
 ]]
 
@@ -27,7 +28,7 @@ local snFields = {
   mass=true,
   minX=true, maxX=true, minY=true, maxY=true,
   xSum=true, ySum=true,
-  critical=true,
+  border=true,
 }
 
 local function doAdd(l, r)
@@ -40,7 +41,7 @@ local function doAdd(l, r)
   out.maxY = max(lIn.maxY, rIn.maxY)
   out.xSum = lIn.xSum + rIn.xSum
   out.ySum = lIn.ySum + rIn.ySum
-  out.critical = lIn.critical or rIn.critical
+  out.border = lIn.border or rIn.border
   return ffi_string(out, szSegName)
 end
 
@@ -99,7 +100,8 @@ function iSegment:__newindex(k)
 end
 
 function iSegment:__tostring()
-  return '<segment>'
+  copy(lIn, self.name, szSegName)
+  return string.format("[segment: l=%d t=%d r=%d b=%d mass=%d]", lIn.minX, lIn.minY, lIn.maxX, lIn.maxY, lIn.mass)
 end
 
 for fName, _ in pairs(snFields) do

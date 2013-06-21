@@ -18,7 +18,7 @@ function UnionFind:find()
   local valAccum = nil
   while not rawequal(self, self.parent) do
     last.parent = self.parent
-    assert(not rawequal(self.parent, last))
+    --assert(not rawequal(self.parent, last))
     if last.val then
       if valAccum == nil then
         valAccum = last.val
@@ -30,7 +30,7 @@ function UnionFind:find()
     last = self
     self = self.parent
   end
-  assert(self.val)
+  --assert(self.val)
   if valAccum ~= nil then
     self.val = self.val + valAccum
   end
