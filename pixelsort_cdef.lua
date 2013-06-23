@@ -1,4 +1,7 @@
-﻿tonumber(nil or--[[)/*]]require('ffi').cdef("/*"..[[*/
+﻿#include "cdef.h"
+tonumber(((function()--[[] ])))/*]]
+
+local ffi = require('ffi').cdef("/"..[[**/
 
 enum fillPixResult
 {
@@ -37,7 +40,8 @@ struct wshed
     void *clientDataPtr;
     int clientDataIntA, clientDataIntB;
     l_int64 clientDataInt64;
-    int width, height, numPixels;
+    FPIX *fpix;
+    l_int32 width, height, numPixels;
     int nextRank;
     struct pixel *queue;
     struct wsGridCell *pgrid;
@@ -48,9 +52,16 @@ struct wshed
 
 void grod_genSortedListFromFPix(FPIX *fpix, struct pixel *buffer);
 
-enum fillPixResult fillImage(struct wshed *self,
+struct wshed *wshed_create(FPIX *fpix);
+
+void wshed_free(struct wshed *wshed);
+
+enum fillPixResult fillImage(struct wshed *wshed,
                              struct wsGridCell **pixSeg,
                              struct wsGridCell *mergePair[2],
                              enum mergeResult const *pmr);
 
-//]]))
+// vim: filetype=c:
+/*]])
+return ffi.C
+end)()))--*/

@@ -1,5 +1,18 @@
 # Binaries
+*.o
 *.so
+
+# Precompiled bytecode
+FPix.c
+NumA.c
+Pix.c
+PixA.c
+Pta.c
+Watershed.c
+ffiu.c
+liblept.c
+point16.c
+*_cdef.c
 
 # Build and Release Folders
 bin/
@@ -8,3 +21,4 @@ bin-release/
 
 # Other files and folders
 .settings/
+.*.sw?

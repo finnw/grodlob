@@ -100,6 +100,32 @@ static void gen_pixels(const float *base,
     }
 }
 
+static void genGridCells(int width, int height,
+                         struct wsGridCell *pgrid)
+{
+    int x, y;
+    struct wsGridCell *cp;
+    struct wsGridCell *rowBase;
+
+    for (y = 0; y <= height; ++ y)
+    {
+        rowBase = &pgrid[y * width];
+        for (x = 0; x <= width; ++ x)
+        {
+            cp = &rowBase[x];
+            cp->visited = 0;
+            cp->edge = 0;
+            cp->rank = 0;
+            cp->minX = cp->maxX = (l_int16)x;
+            cp->minY = cp->maxY = (l_int16)y;
+            cp->mass = 1;
+            cp->parent = cp;
+            cp->xSum = x;
+            cp->ySum = y;
+        }
+    }
+}
+
 static int qs_compare_pixels(const void *pv1, const void *pv2)
 {
     const struct pixel *ppx1 = (const struct pixel *)pv1,
@@ -199,14 +225,32 @@ static enum fillPixResult fillPixel(struct wshed *self,
     }
 }
 
-struct wshed *incws_create(FPIX *fpix)
+struct wshed *wshed_create(FPIX *fpix)
 {
+    struct wshed *self = calloc(1, sizeof (*self));
+    memset(self, 0, sizeof (*self));
+    self->fpix = fpixClone(fpix);
+    fpixGetDimensions(self->fpix, &self->width, &self->height);
+    self->numPixels = self->width * self->height;
+    self->queue = calloc(self->numPixels, sizeof (*self->queue));
+    grod_genSortedListFromFPix(self->fpix, self->queue);
+    self->pgrid = calloc(self->numPixels, sizeof (*self->pgrid));
+    genGridCells(self->width, self->height, self->pgrid);
+    return self;
 }
 
-enum fillPixResult fillImage(struct wshed *self,
-                             struct wsGridCell **pixSeg,
-                             struct wsGridCell *mergePair[2],
-                             enum mergeResult const *pmr)
+void wshed_free(struct wshed *self)
+{
+    free(self->pgrid);
+    free(self->queue);
+    fpixDestroy(&self->fpix);
+    free(self);
+}
+
+enum fillPixResult wshed_fillImage(struct wshed *self,
+                                   struct wsGridCell **pixSeg,
+                                   struct wsGridCell *mergePair[2],
+                                   enum mergeResult const *pmr)
 {
     enum fillPixResult fpr = FPR_NEEDSMERGE;
     if (pmr) goto RESUME;
