@@ -10,6 +10,8 @@ typedef int16_t  l_int16;
 typedef uint16_t l_uint16;
 typedef int32_t  l_int32;
 typedef uint32_t l_uint32;
+typedef int64_t  l_int64; // Non-standard
+typedef uint64_t l_uint64; // Non-standard
 typedef float    l_float32;
 typedef double   l_float64;
 

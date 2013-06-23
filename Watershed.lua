@@ -12,17 +12,7 @@ local mWatershed = {}
 local Watershed = setmetatable({}, mWatershed)
 local iWatershed = {__index=Watershed}
 
-ffi.cdef [[
-
-struct pixel
-{
-  float intensity;
-  int16_t x, y;
-};
-
-void grod_genSortedListFromFPix(FPIX *fpix, struct pixel *buffer);
-
-]]
+require 'pixelsort_cdef'
 
 local C = ffi.C
 
