@@ -25,6 +25,10 @@ struct wshed_handle
 local ctHandle
 local iHandle = {}
 
+local GridCell = {}
+local ctGridCell
+local iGridCell = {}
+
 local EMPTY = {}
 local NaN = math.huge - math.huge
 
@@ -186,5 +190,17 @@ function iHandle:__gc()
 end
 
 ctHandle = ffi.metatype('struct wshed_handle', iHandle)
+
+function iGridCell:__index(k)
+  if k == 'width' then
+    return self.maxX - self.minX + 1
+  elseif k == 'height' then
+    return self.maxY - self.minY + 1
+  else
+    return GridCell[k]
+  end
+end
+
+ctGridCell = ffi.metatype('struct wsGridCell', iGridCell)
 
 return Watershed
