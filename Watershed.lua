@@ -30,7 +30,7 @@ local NaN = math.huge - math.huge
 
 function mWatershed:__call(fpix)
   local handle = ctHandle()
-  self = { handle=handle }
+  self = { handle=handle, fpix=fpix }
   handle.targets[0] = pixelsort.wshed_create(fpix:toPFPix())
   setmetatable(self, iWatershed)
   return self
