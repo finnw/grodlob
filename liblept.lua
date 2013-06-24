@@ -538,6 +538,112 @@ enum {
     L_MIRRORED_BORDER = 2       /* mirrored                           */
 };
 
+/* From morph.h */
+
+struct Sel
+{
+    l_int32       sy;          /* sel height                               */
+    l_int32       sx;          /* sel width                                */
+    l_int32       cy;          /* y location of sel origin                 */
+    l_int32       cx;          /* x location of sel origin                 */
+    l_int32     **data;        /* {0,1,2}; data[i][j] in [row][col] order  */
+    char         *name;        /* used to find sel by name                 */
+};
+typedef struct Sel SEL;
+
+struct Sela
+{
+    l_int32          n;         /* number of sel actually stored           */
+    l_int32          nalloc;    /* size of allocated ptr array             */
+    struct Sel     **sel;       /* sel ptr array                           */
+};
+typedef struct Sela SELA;
+
+struct L_Kernel
+{
+    l_int32       sy;          /* kernel height                            */
+    l_int32       sx;          /* kernel width                             */
+    l_int32       cy;          /* y location of kernel origin              */
+    l_int32       cx;          /* x location of kernel origin              */
+    l_float32   **data;        /* data[i][j] in [row][col] order           */
+};
+typedef struct L_Kernel  L_KERNEL;
+
+enum {
+    SYMMETRIC_MORPH_BC = 0,
+    ASYMMETRIC_MORPH_BC = 1
+};
+
+enum {
+    SEL_DONT_CARE  = 0,
+    SEL_HIT        = 1,
+    SEL_MISS       = 2
+};
+
+enum {
+    L_RUN_OFF = 0,
+    L_RUN_ON  = 1
+};
+
+enum {
+    L_HORIZ            = 1,
+    L_VERT             = 2,
+    L_BOTH_DIRECTIONS  = 3
+};
+
+enum {
+    L_MORPH_DILATE    = 1,
+    L_MORPH_ERODE     = 2,
+    L_MORPH_OPEN      = 3,
+    L_MORPH_CLOSE     = 4,
+    L_MORPH_HMT       = 5
+};
+
+enum {
+    L_LINEAR_SCALE  = 1,
+    L_LOG_SCALE     = 2
+};
+enum {
+    L_TOPHAT_WHITE = 0,
+    L_TOPHAT_BLACK = 1
+};
+
+enum {
+    L_ARITH_ADD       = 1,
+    L_ARITH_SUBTRACT  = 2,
+    L_ARITH_MULTIPLY  = 3,   /* on numas only */
+    L_ARITH_DIVIDE    = 4,   /* on numas only */
+    L_UNION           = 5,   /* on numas only */
+    L_INTERSECTION    = 6,   /* on numas only */
+    L_SUBTRACTION     = 7,   /* on numas only */
+    L_EXCLUSIVE_OR    = 8    /* on numas only */
+};
+
+enum {
+    L_CHOOSE_MIN = 1,           /* useful in a downscaling "erosion"  */
+    L_CHOOSE_MAX = 2,           /* useful in a downscaling "dilation" */
+    L_CHOOSE_MAX_MIN_DIFF = 3   /* useful in a downscaling contrast   */
+};
+
+enum {
+    L_BOUNDARY_BG = 1,  /* assume bg outside image */
+    L_BOUNDARY_FG = 2   /* assume fg outside image */
+};
+
+enum {
+    L_COMPARE_XOR = 1,
+    L_COMPARE_SUBTRACT = 2,
+    L_COMPARE_ABS_DIFF = 3
+};
+
+enum {
+    L_MAX_DIFF_FROM_AVERAGE_2 = 1,
+    L_MAX_MIN_DIFF_FROM_2 = 2,
+    L_MAX_DIFF = 3
+};
+
+static const l_int32  ADDED_BORDER = 32;   /* pixels, not bits */
+
 /*
 LEPT_DLL extern PIX * pixBackgroundNormSimple ( PIX *pixs, PIX *pixim, PIX *pixg );
 LEPT_DLL extern PIX * pixBackgroundNorm ( PIX *pixs, PIX *pixim, PIX *pixg, l_int32 sx, l_int32 sy, l_int32 thresh, l_int32 mincount, l_int32 bgval, l_int32 smoothx, l_int32 smoothy );
@@ -2372,41 +2478,43 @@ LEPT_DLL extern void seedfillGrayLowSimple ( l_uint32 *datas, l_int32 w, l_int32
 LEPT_DLL extern void seedfillGrayInvLowSimple ( l_uint32 *datas, l_int32 w, l_int32 h, l_int32 wpls, l_uint32 *datam, l_int32 wplm, l_int32 connectivity );
 LEPT_DLL extern void distanceFunctionLow ( l_uint32 *datad, l_int32 w, l_int32 h, l_int32 d, l_int32 wpld, l_int32 connectivity );
 LEPT_DLL extern void seedspreadLow ( l_uint32 *datad, l_int32 w, l_int32 h, l_int32 wpld, l_uint32 *datat, l_int32 wplt, l_int32 connectivity );
-LEPT_DLL extern SELA * selaCreate ( l_int32 n );
-LEPT_DLL extern void selaDestroy ( SELA **psela );
-LEPT_DLL extern SEL * selCreate ( l_int32 height, l_int32 width, const char *name );
-LEPT_DLL extern void selDestroy ( SEL **psel );
-LEPT_DLL extern SEL * selCopy ( SEL *sel );
-LEPT_DLL extern SEL * selCreateBrick ( l_int32 h, l_int32 w, l_int32 cy, l_int32 cx, l_int32 type );
-LEPT_DLL extern SEL * selCreateComb ( l_int32 factor1, l_int32 factor2, l_int32 direction );
-LEPT_DLL extern l_int32 ** create2dIntArray ( l_int32 sy, l_int32 sx );
-LEPT_DLL extern l_int32 selaAddSel ( SELA *sela, SEL *sel, const char *selname, l_int32 copyflag );
-LEPT_DLL extern l_int32 selaExtendArray ( SELA *sela );
-LEPT_DLL extern l_int32 selaGetCount ( SELA *sela );
-LEPT_DLL extern SEL * selaGetSel ( SELA *sela, l_int32 i );
-LEPT_DLL extern char * selGetName ( SEL *sel );
-LEPT_DLL extern l_int32 selSetName ( SEL *sel, const char *name );
-LEPT_DLL extern l_int32 selaFindSelByName ( SELA *sela, const char *name, l_int32 *pindex, SEL **psel );
-LEPT_DLL extern l_int32 selGetElement ( SEL *sel, l_int32 row, l_int32 col, l_int32 *ptype );
-LEPT_DLL extern l_int32 selSetElement ( SEL *sel, l_int32 row, l_int32 col, l_int32 type );
-LEPT_DLL extern l_int32 selGetParameters ( SEL *sel, l_int32 *psy, l_int32 *psx, l_int32 *pcy, l_int32 *pcx );
-LEPT_DLL extern l_int32 selSetOrigin ( SEL *sel, l_int32 cy, l_int32 cx );
-LEPT_DLL extern l_int32 selGetTypeAtOrigin ( SEL *sel, l_int32 *ptype );
-LEPT_DLL extern char * selaGetBrickName ( SELA *sela, l_int32 hsize, l_int32 vsize );
-LEPT_DLL extern char * selaGetCombName ( SELA *sela, l_int32 size, l_int32 direction );
-LEPT_DLL extern l_int32 getCompositeParameters ( l_int32 size, l_int32 *psize1, l_int32 *psize2, char **pnameh1, char **pnameh2, char **pnamev1, char **pnamev2 );
-LEPT_DLL extern SARRAY * selaGetSelnames ( SELA *sela );
-LEPT_DLL extern l_int32 selFindMaxTranslations ( SEL *sel, l_int32 *pxp, l_int32 *pyp, l_int32 *pxn, l_int32 *pyn );
-LEPT_DLL extern SEL * selRotateOrth ( SEL *sel, l_int32 quads );
-LEPT_DLL extern SELA * selaRead ( const char *fname );
-LEPT_DLL extern SELA * selaReadStream ( FILE *fp );
-LEPT_DLL extern SEL * selRead ( const char *fname );
-LEPT_DLL extern SEL * selReadStream ( FILE *fp );
-LEPT_DLL extern l_int32 selaWrite ( const char *fname, SELA *sela );
-LEPT_DLL extern l_int32 selaWriteStream ( FILE *fp, SELA *sela );
-LEPT_DLL extern l_int32 selWrite ( const char *fname, SEL *sel );
-LEPT_DLL extern l_int32 selWriteStream ( FILE *fp, SEL *sel );
-LEPT_DLL extern SEL * selCreateFromString ( const char *text, l_int32 h, l_int32 w, const char *name );
+*/
+SELA *selaCreate ( l_int32 n );
+void selaDestroy ( SELA **psela );
+SEL *selCreate ( l_int32 height, l_int32 width, const char *name );
+void selDestroy ( SEL **psel );
+SEL *selCopy ( SEL *sel );
+SEL *selCreateBrick ( l_int32 h, l_int32 w, l_int32 cy, l_int32 cx, l_int32 type );
+SEL *selCreateComb ( l_int32 factor1, l_int32 factor2, l_int32 direction );
+l_int32 **create2dIntArray ( l_int32 sy, l_int32 sx );
+l_int32 selaAddSel ( SELA *sela, SEL *sel, const char *selname, l_int32 copyflag );
+l_int32 selaExtendArray ( SELA *sela );
+l_int32 selaGetCount ( SELA *sela );
+SEL *selaGetSel ( SELA *sela, l_int32 i );
+char *selGetName ( SEL *sel );
+l_int32 selSetName ( SEL *sel, const char *name );
+l_int32 selaFindSelByName ( SELA *sela, const char *name, l_int32 *pindex, SEL **psel );
+l_int32 selGetElement ( SEL *sel, l_int32 row, l_int32 col, l_int32 *ptype );
+l_int32 selSetElement ( SEL *sel, l_int32 row, l_int32 col, l_int32 type );
+l_int32 selGetParameters ( SEL *sel, l_int32 *psy, l_int32 *psx, l_int32 *pcy, l_int32 *pcx );
+l_int32 selSetOrigin ( SEL *sel, l_int32 cy, l_int32 cx );
+l_int32 selGetTypeAtOrigin ( SEL *sel, l_int32 *ptype );
+char * selaGetBrickName ( SELA *sela, l_int32 hsize, l_int32 vsize );
+char * selaGetCombName ( SELA *sela, l_int32 size, l_int32 direction );
+l_int32 getCompositeParameters ( l_int32 size, l_int32 *psize1, l_int32 *psize2, char **pnameh1, char **pnameh2, char **pnamev1, char **pnamev2 );
+SARRAY * selaGetSelnames ( SELA *sela );
+l_int32 selFindMaxTranslations ( SEL *sel, l_int32 *pxp, l_int32 *pyp, l_int32 *pxn, l_int32 *pyn );
+SEL * selRotateOrth ( SEL *sel, l_int32 quads );
+SELA * selaRead ( const char *fname );
+SELA * selaReadStream ( void *fp );
+SEL * selRead ( const char *fname );
+SEL * selReadStream ( void *fp );
+l_int32 selaWrite ( const char *fname, SELA *sela );
+l_int32 selaWriteStream ( void *fp, SELA *sela );
+l_int32 selWrite ( const char *fname, SEL *sel );
+l_int32 selWriteStream ( void *fp, SEL *sel );
+SEL * selCreateFromString ( const char *text, l_int32 h, l_int32 w, const char *name );
+/*
 LEPT_DLL extern char * selPrintToString ( SEL *sel );
 LEPT_DLL extern SELA * selaCreateFromFile ( const char *filename );
 LEPT_DLL extern SEL * selCreateFromPta ( PTA *pta, l_int32 cy, l_int32 cx, const char *name );

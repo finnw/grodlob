@@ -229,17 +229,12 @@ struct wshed *wshed_create(FPIX *fpix)
     struct wshed *self = calloc(1, sizeof (*self));
     memset(self, 0, sizeof (*self));
     self->fpix = fpixClone(fpix);
-    printf("cloned the fpix\n");
     fpixGetDimensions(self->fpix, &self->width, &self->height);
     self->numPixels = self->width * self->height;
     self->queue = calloc(self->numPixels, sizeof (*self->queue));
-    printf("allocated the queue\n");
     grod_genSortedListFromFPix(self->fpix, self->queue);
-    printf("populated the queue\n");
     self->pgrid = calloc(self->numPixels, sizeof (*self->pgrid));
-    printf("allocated the grid\n");
     genGridCells(self->width, self->height, self->pgrid);
-    printf("populated the grid\n");
     return self;
 }
 
