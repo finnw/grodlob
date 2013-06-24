@@ -15,7 +15,6 @@ typedef uint64_t l_uint64;
 #include "leptonica/alltypes.h"
 #include "leptonica/leptprotos.h"
 
-#define tonumber(_)
 #include "pixelsort_cdef.lua"
 
 #define MIX(x) \
@@ -54,7 +53,7 @@ static struct wsGridCell *find(struct wsGridCell *p)
     return p;
 }
 
-static void merge(struct wsGridCell *p, struct wsGridCell *q)
+void wshed_merge(struct wsGridCell *p, struct wsGridCell *q)
 {
     p = find(p); q = find(q);
     if (p == q) return;
@@ -107,10 +106,10 @@ static void genGridCells(int width, int height,
     struct wsGridCell *cp;
     struct wsGridCell *rowBase;
 
-    for (y = 0; y <= height; ++ y)
+    for (y = 0; y < height; ++ y)
     {
         rowBase = &pgrid[y * width];
-        for (x = 0; x <= width; ++ x)
+        for (x = 0; x < width; ++ x)
         {
             cp = &rowBase[x];
             cp->visited = 0;
@@ -216,7 +215,7 @@ static enum fillPixResult fillPixel(struct wshed *self,
     mergePair[1] = NULL;
     if (uniqueNeighbor)
     {
-        merge(uniqueNeighbor, cp);
+        wshed_merge(uniqueNeighbor, cp);
         return FPR_EXTENDED;
     }
     else
@@ -230,12 +229,17 @@ struct wshed *wshed_create(FPIX *fpix)
     struct wshed *self = calloc(1, sizeof (*self));
     memset(self, 0, sizeof (*self));
     self->fpix = fpixClone(fpix);
+    printf("cloned the fpix\n");
     fpixGetDimensions(self->fpix, &self->width, &self->height);
     self->numPixels = self->width * self->height;
     self->queue = calloc(self->numPixels, sizeof (*self->queue));
+    printf("allocated the queue\n");
     grod_genSortedListFromFPix(self->fpix, self->queue);
+    printf("populated the queue\n");
     self->pgrid = calloc(self->numPixels, sizeof (*self->pgrid));
+    printf("allocated the grid\n");
     genGridCells(self->width, self->height, self->pgrid);
+    printf("populated the grid\n");
     return self;
 }
 
@@ -247,10 +251,10 @@ void wshed_free(struct wshed *self)
     free(self);
 }
 
-enum fillPixResult wshed_fillImage(struct wshed *self,
-                                   struct wsGridCell **pixSeg,
-                                   struct wsGridCell *mergePair[2],
-                                   enum mergeResult const *pmr)
+enum fillPixResult wshed_fill(struct wshed *self,
+                              struct wsGridCell **pixSeg,
+                              struct wsGridCell *mergePair[2],
+                              enum mergeResult const *pmr)
 {
     enum fillPixResult fpr = FPR_NEEDSMERGE;
     if (pmr) goto RESUME;

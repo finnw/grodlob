@@ -1,7 +1,10 @@
 ﻿#include "cdef.h"
-tonumber(((function()--[[] ])))/*]]
+tonumber(((function(m)--[[] ])))/*]]
 
-local ffi = require('ffi').cdef("/"..[[**/
+local ffi = require 'ffi'
+local ffilib = require 'ffilib'
+
+ffi.cdef("/"..[[**/
 
 enum fillPixResult
 {
@@ -45,9 +48,9 @@ struct wshed
     int nextRank;
     struct pixel *queue;
     struct wsGridCell *pgrid;
-    enum fillPixResult (*mergeStrategy)(struct wshed *self,
-                                        struct wsGridCell *seg1,
-                                        struct wsGridCell *seg2);
+    enum mergeResult (*mergeStrategy)(struct wshed *self,
+                                      struct wsGridCell *seg1,
+                                      struct wsGridCell *seg2);
 };
 
 void grod_genSortedListFromFPix(FPIX *fpix, struct pixel *buffer);
@@ -56,12 +59,14 @@ struct wshed *wshed_create(FPIX *fpix);
 
 void wshed_free(struct wshed *wshed);
 
-enum fillPixResult fillImage(struct wshed *wshed,
-                             struct wsGridCell **pixSeg,
-                             struct wsGridCell *mergePair[2],
-                             enum mergeResult const *pmr);
+void wshed_merge(struct wsGridCell *p, struct wsGridCell *q);
+
+enum fillPixResult wshed_fill(struct wshed *wshed,
+                              struct wsGridCell **pixSeg,
+                              struct wsGridCell *mergePair[2],
+                              enum mergeResult const *pmr);
 
 // vim: filetype=c:
 /*]])
-return ffi.C
-end)()))--*/
+package.loaded[m] = ffilib(m)
+end)(...)))--*/
