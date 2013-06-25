@@ -105,10 +105,14 @@ function Pix:convertToFPix(ncomps)
   return FPix(clLept.pixConvertToFPix(ppixs, ncomps))
 end
 
+function Pix:copy(pixd)
+  return wrap(clLept.pixCopy(toPPix(pixd), toPPix(self)))
+end
+
 function Pix.create(width, height, depth)
   local ppix = clLept.pixCreate(width, height, depth)
   assert(nonNull(ppix))
-  return wrap(ppix)
+  return wrap(ppix, 'unique')
 end
 
 if W then
@@ -269,6 +273,14 @@ end
 
 function Pix.rotate(pixs, angle, type, incolor, width, height)
   return Pix(clLept.pixRotate(toPPix(pixs), angle, type, incolor, width or 0, height or 0))
+end
+
+function Pix:setMasked(pixm, value)
+  clLept.pixSetMasked(toPPix(self), toPPix(pixm), value)
+end
+
+function Pix:setPixel(x, y, value)
+  clLept.pixSetPixel(toPPix(self), x, y, value)
 end
 
 Pix.toPPix = toPPix

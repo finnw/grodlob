@@ -53,9 +53,9 @@ struct wshed
                                       struct wsGridCell *seg2);
 };
 
-void grod_genSortedListFromFPix(FPIX *fpix, struct pixel *buffer);
-
 struct wshed *wshed_create(FPIX *fpix);
+
+struct wsGridCell *wshed_find(struct wsGridCell *p);
 
 void wshed_free(struct wshed *wshed);
 

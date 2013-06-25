@@ -41,7 +41,7 @@ static void fold(struct wsGridCell *from, struct wsGridCell *to)
     to->maxY = MAX(to->maxY, from->maxY); from->maxX = -0x8000;
 }
 
-static struct wsGridCell *find(struct wsGridCell *p)
+struct wsGridCell *wshed_find(struct wsGridCell *p)
 {
     struct wsGridCell *last = p;
     while (p != p->parent)
@@ -55,7 +55,7 @@ static struct wsGridCell *find(struct wsGridCell *p)
 
 void wshed_merge(struct wsGridCell *p, struct wsGridCell *q)
 {
-    p = find(p); q = find(q);
+    p = wshed_find(p); q = wshed_find(q);
     if (p == q) return;
     if (p->rank < q->rank)
     {
@@ -177,7 +177,7 @@ static enum fillPixResult fillPixel(struct wshed *self,
     struct wsGridCell *np = NULL, *uniqueNeighbor = NULL;
     const struct pixel *curPix = &self->queue[self->nextRank];
 
-    cp = find(&self->pgrid[curPix->y * self->width + curPix->x]);
+    cp = wshed_find(&self->pgrid[curPix->y * self->width + curPix->x]);
     for (dy=-1; dy<=1; ++ dy)
     {
         ny = curPix->y + dy;
@@ -194,7 +194,7 @@ static enum fillPixResult fillPixel(struct wshed *self,
             {
                 continue;
             }
-            np = find(np);
+            np = wshed_find(np);
             if ((!uniqueNeighbor) || (uniqueNeighbor==np))
             {
                 // No conflict (yet)
@@ -276,6 +276,10 @@ RESUME:
                 case MR_SKIP:
                     goto ADVANCE;
                 case MR_YIELD:
+                    break;
+                default:
+                    fprintf(stderr, "Invalid merge result: %d\n", (int)*pmr);
+                    abort();
                     break;
                 }
             }

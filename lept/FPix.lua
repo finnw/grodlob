@@ -1,25 +1,34 @@
 local ffi = require 'ffi'
+local ffiu = require 'ffiu'
 local liblept = require 'liblept'
+
+local assert, select = assert, select
+
+local istype, new, ffi_string = ffi.istype, ffi.new, ffi.string
+
+local nonNull = ffiu.nonNull
 
 local mFPix = {}
 local FPix = {}
 local iFPix = {__index=FPix}
 local ctPFPix = ffi.typeof 'struct FPix *'
-local ctFPix
+local ctFPix, cbFPix
 
 local clLept = getmetatable(liblept).__index
+
+local wrapperMap = setmetatable({}, {__index='v'})
 
 local function toPFPix(fpix)
   if fpix == nil then
     return nil
-  elseif ffi.istype(fpix, ctFPix) then
+  elseif istype(ctFPix, fpix) then
     local pFPix = fpix.handles[0]
     if pFPix == nil then
       return nil
     else
       return pFPix
     end
-  elseif ffi.istype(fpix, ctPFPix) then
+  elseif istype(ctPFPix, fpix) then
     return fpix
   else
     error("Invalid FPix designator: " .. tostring(fpix), 3)
@@ -27,22 +36,29 @@ local function toPFPix(fpix)
 end
 FPix.toPFPix = toPFPix
 
-function mFPix:__call(fpix)
-  local pfpix = toPFPix(fpix)
-  if not pfpix then return nil end
-  self = ffi.new(ctFPix)
+local function wrap(pfpix, mode)
+  if not nonNull(pfpix) then return nil end
+  if istype(ctFPix, pfpix) then return pfpix end
+  assert(istype(ctPFPix, pfpix), debug.traceback())
+  local self = new(ctFPix)
   self.handles[0] = clLept.fpixClone(pfpix)
+  if mode == 'unique' then return self end
+  local key = ffi_string(self.handles, cbFPix)
+  local fpix = wrapperMap[key]
+  if fpix then
+    self = fpix
+  else
+    wrapperMap[key] = self
+  end
   return self
 end
 
-function FPix:clone()
-  return FPix(self.handles[0])
+function mFPix:__call(pfpix, mode)
+  return wrap(pfpix, mode)
 end
 
 function FPix.create(width, height)
-  local self = ffi.new(ctFPix)
-  self.handles[0] = clLept.fpixCreate(width, height)
-  return self
+  return wrap(clLept.fpixCreate(width, height), 'unique')
 end
 
 function FPix:getData()
@@ -50,14 +66,14 @@ function FPix:getData()
 end
 
 do
-  local px, py = ffi.new 'int32_t[1]', ffi.new 'int32_t[1]'
+  local px, py = new 'int32_t[1]', new 'int32_t[1]'
   function FPix:getDimensions()
     local status = clLept.fpixGetDimensions(self.handles[0], px, py)
     assert(status == 0)
     return px[0], py[0]
   end
 
-  local pMaxVal = ffi.new 'float[1]'
+  local pMaxVal = new 'float[1]'
   function FPix:getMax()
     local status = clLept.fpixGetMax(self.handles[0], pMaxVal, px, py)
     assert(status == 0)
@@ -65,10 +81,8 @@ do
   end
 end
 
-FPix.getHandle = toPFPix
-
 do
-  local pixelBuf = ffi.new 'float[1]'
+  local pixelBuf = new 'float[1]'
   function FPix:getPixel(x, y)
     local res = clLept.fpixGetPixel(self.handles[0], x, y, pixelBuf)
     assert(res == 0, "failed to read pixel value")
@@ -110,9 +124,8 @@ function iFPix:__tostring()
                        p, p.w, p.h, p.wpl, p.refcount, p.xres, p.yres, text, tostring(p.data))
 end
 
-iFPix.__unm = toPFPix
-
 ctFPix = ffi.metatype('struct {struct FPix *handles[1];}', iFPix)
+cbFPix = ffi.sizeof(ctFPix)
 
 setmetatable(FPix, mFPix)
 

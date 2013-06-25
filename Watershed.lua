@@ -1,4 +1,4 @@
-local FPix = require 'lept.FPix'
+local Pix = require 'lept.Pix'
 local ffi = require 'ffi'
 local liblept = require 'liblept'
 local point16 = require 'point16'
@@ -51,7 +51,7 @@ do
         pixelsort.wshed_fill(self.handle.targets[0], pixSeg, mergePair, mr)
       mr = nil
       if fpr == C.FPR_DONE then
-        break
+        return nil, 'C.FPR_DONE', self.handle.targets[0].nextRank
       elseif fpr == C.FPR_NEEDSMERGE then
         mrBuf[0] = shouldMerge(pixSeg[0], mergePair[0], mergePair[1])
         mr = mrBuf
@@ -87,6 +87,41 @@ function Watershed:findBorder()
     self.borderP = borderP
   end
   return self.borderP
+end
+
+function Watershed:highlight(seg)
+  seg = pixelsort.find(seg)
+  local cws = self.handle.targets[0]
+  local mask = Pix.create(cws.width, cws.height, 1)
+  for y = seg.minY, seg.maxY do
+    local pgrow = self.handle.targets[0].pgrid + y * cws.width
+    for x = seg.minX, seg.maxX do
+      if pixelsort.find(pgrow[x]) == seg then
+        mask:setPixel(x, y, 1)
+      end
+    end
+  end
+  return mask
+end
+
+function Watershed:highlightUnvisited()
+  local cws = self.handle.targets[0]
+  local mask = Pix.create(cws.width, cws.height, 1)
+  for y = 0, cws.height-1 do
+    local pgrow = self.handle.targets[0].pgrid + y * cws.width
+    for x = 0, cws.width-1 do
+      if pgrow[x].visited <= 0 then
+        mask:setPixel(x, y, 1)
+      end
+    end
+  end
+  return mask
+end
+
+function Watershed:segmentContains(p, x, y)
+  local i = y * self.fpix.w + x
+  return pixelsort.find(self.handle.targets[0].pgrid[i]) ==
+         pixelsort.find(p)
 end
 
 function Watershed:setSmallSegPriority(thres, val)
