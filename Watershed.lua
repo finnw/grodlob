@@ -90,13 +90,13 @@ function Watershed:findBorder()
 end
 
 function Watershed:highlight(seg)
-  seg = pixelsort.find(seg)
+  seg = pixelsort.wshed_find(seg)
   local cws = self.handle.targets[0]
   local mask = Pix.create(cws.width, cws.height, 1)
   for y = seg.minY, seg.maxY do
     local pgrow = self.handle.targets[0].pgrid + y * cws.width
     for x = seg.minX, seg.maxX do
-      if pixelsort.find(pgrow[x]) == seg then
+      if pixelsort.wshed_find(pgrow[x]) == seg then
         mask:setPixel(x, y, 1)
       end
     end
@@ -120,8 +120,8 @@ end
 
 function Watershed:segmentContains(p, x, y)
   local i = y * self.fpix.w + x
-  return pixelsort.find(self.handle.targets[0].pgrid[i]) ==
-         pixelsort.find(p)
+  return pixelsort.wshed_find(self.handle.targets[0].pgrid[i]) ==
+         pixelsort.wshed_find(p)
 end
 
 function Watershed:setSmallSegPriority(thres, val)
