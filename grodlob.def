@@ -1,0 +1,19 @@
+LIBRARY "grodlob"
+EXPORTS
+  grod_genSortedListFromFPix
+  wshed_create
+  wshed_free
+  wshed_merge
+  wshed_fill
+  wshed_find
+  luaJIT_BC_Watershed
+  luaJIT_BC_ffilib
+  luaJIT_BC_ffiu
+  luaJIT_BC_lept_FPix
+  luaJIT_BC_lept_NumA
+  luaJIT_BC_lept_Pix
+  luaJIT_BC_lept_PixA
+  luaJIT_BC_lept_Pta
+  luaJIT_BC_liblept
+  luaJIT_BC_pixelsort_cdef
+  luaJIT_BC_point16
