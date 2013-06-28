@@ -33,8 +33,6 @@ typedef uint64_t l_uint64;
 static void fold(struct wsGridCell *from, struct wsGridCell *to)
 {
     to->mass += from->mass; from->mass = 0;
-    //to->xSum += from->xSum; from->xSum = 0;
-    //to->ySum += from->ySum; from->ySum = 0;
     to->minX = MIN(to->minX, from->minX); from->minX = 0x7fff;
     to->maxX = MAX(to->maxX, from->maxX); from->maxX = -0x8000;
     to->minY = MIN(to->minY, from->minY); from->minY = 0x7fff;

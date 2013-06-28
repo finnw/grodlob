@@ -35,7 +35,6 @@ struct wsGridCell
     l_int32 mass;
     l_int16 minX, maxX, minY, maxY;
     struct wsGridCell *parent;
-    //l_int64 xSum, ySum;
 };
 
 struct wshed
