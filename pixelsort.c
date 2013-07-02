@@ -5,10 +5,12 @@
 #ifdef _MSC_VER 
 typedef __int64 l_int64;
 typedef unsigned __int64 l_uint64;
+typedef long g_intptr;
 #else
 #include <stdint.h>
 typedef int64_t l_int64;
 typedef uint64_t l_uint64;
+typedef intptr_t g_intptr;
 #endif
 
 #include "leptonica/environ.h"
@@ -27,16 +29,19 @@ typedef uint64_t l_uint64;
         x ^= (x) << 7; \
     } while (0)
 
-#define MIN(a, b) ((a)<(b)? (a): (b))
-#define MAX(a, b) ((a)>(b)? (a): (b))
-
+#define MIN16(x, y) ((l_int16)(y + ((x - y) & ((x - y) >> 31))))
+#define MAX16(x, y) ((l_int16)(x - ((x - y) & ((x - y) >> 31))))
 static void fold(struct wsGridCell *from, struct wsGridCell *to)
 {
     to->mass += from->mass; from->mass = 0;
-    to->minX = MIN(to->minX, from->minX); from->minX = 0x7fff;
-    to->maxX = MAX(to->maxX, from->maxX); from->maxX = -0x8000;
-    to->minY = MIN(to->minY, from->minY); from->minY = 0x7fff;
-    to->maxY = MAX(to->maxY, from->maxY); from->maxX = -0x8000;
+    to->minX = MIN16((l_int32)to->minX, (l_int32)from->minX);
+    from->minX = 0x7fff;
+    to->maxX = MAX16((l_int32)to->maxX, (l_int32)from->maxX);
+    from->maxX = -0x8000;
+    to->minY = MIN16((l_int32)to->minY, (l_int32)from->minY);
+    from->minY = 0x7fff;
+    to->maxY = MAX16((l_int32)to->maxY, (l_int32)from->maxY);
+    from->maxX = -0x8000;
 }
 
 struct wsGridCell *wshed_find(struct wsGridCell *p)
@@ -51,25 +56,23 @@ struct wsGridCell *wshed_find(struct wsGridCell *p)
     return p;
 }
 
+#define SIGN_FILL_BITS (sizeof(g_intptr) * CHAR_BIT - 1)
 void wshed_merge(struct wsGridCell *p, struct wsGridCell *q)
 {
-    p = wshed_find(p); q = wshed_find(q);
-    if (p == q) return;
-    if (p->rank < q->rank)
+    struct wsGridCell *nodes[2];
+
+    nodes[0] = wshed_find(p);
+    nodes[1] = wshed_find(q);
+    if (nodes[0] != nodes[1])
     {
-        p->parent = q;
-        fold(p, q);
-    }
-    else if (p->rank > q->rank)
-    {
-        q->parent = p;
-        fold(q, p);
-    }
-    else
-    {
-        q->parent = p;
-        fold(q, p);
-        ++ p->rank;
+        g_intptr rankDiff, rankBump, from, to;
+        rankDiff = nodes[0]->rank - nodes[1]->rank;
+        rankBump = 1 + ((rankDiff | -rankDiff) >> SIGN_FILL_BITS);
+        to = - (rankDiff >> SIGN_FILL_BITS);
+        from = 1 - to;
+        nodes[0]->parent = nodes[1];
+        fold(nodes[0], nodes[1]);
+        nodes[1]->rank = (l_int8)(nodes[1]->rank + rankBump);
     }
 }
 
@@ -106,10 +109,10 @@ static void genGridCells(int width, int height,
 
     for (y = 0; y < height; ++ y)
     {
-        rowBase = &pgrid[y * width];
+        rowBase = &pgrid[(y+1) * (width+2)];
         for (x = 0; x < width; ++ x)
         {
-            cp = &rowBase[x];
+            cp = &rowBase[x+1];
             cp->visited = 0;
             cp->edge = 0;
             cp->rank = 0;
@@ -165,7 +168,7 @@ void grod_genSortedListFromFPix(FPIX *fpix, struct pixel *buffer)
     gen_pixels(fpixGetData(fpix), width, height, 1, wpl, buffer);
     qsort(buffer, width*height, sizeof (*buffer), qs_compare_pixels);
 }
-
+/*
 static enum fillPixResult fillPixel(struct wshed *self,
                                     struct wsGridCell **pixSeg,
                                     struct wsGridCell *mergePair[2])
@@ -221,6 +224,57 @@ static enum fillPixResult fillPixel(struct wshed *self,
         return FPR_NEW;
     }
 }
+*/
+static enum fillPixResult fillNonborderPixel(struct wshed *self,
+                                             struct wsGridCell **pixSeg,
+                                             struct wsGridCell *mergePair[2])
+{
+#define CHECK_NEIGHBOR do {\
+    np = &self->pgrid[ni]; \
+    if ((! np->visited) || np->edge) continue; \
+    np = wshed_find(np); \
+    if ((!uniqueNeighbor) || (uniqueNeighbor==np)) \
+    { \
+        uniqueNeighbor=np; \
+    } \
+    else \
+    { \
+        *pixSeg = cp; \
+		mergePair[0] = uniqueNeighbor; \
+		mergePair[1] = np; \
+		return FPR_NEEDSMERGE; \
+    } \
+} while (0)
+
+    int ci, ni;
+    struct wsGridCell *cp;
+    struct wsGridCell *np = NULL, *uniqueNeighbor = NULL;
+    const struct pixel *curPix = &self->queue[self->nextRank];
+
+    ci = (curPix->y + 1) * (self->width + 2) + curPix->x + 1;
+    cp = wshed_find(&self->pgrid[ci]);
+    ni = ci - self->width - 3; CHECK_NEIGHBOR;
+    ni = ci - self->width - 2; CHECK_NEIGHBOR;
+    ni = ci - self->width - 1; CHECK_NEIGHBOR;
+    ni = ci               - 1; CHECK_NEIGHBOR;
+    ni = ci               + 1; CHECK_NEIGHBOR;
+    ni = ci + self->width + 1; CHECK_NEIGHBOR;
+    ni = ci + self->width + 2; CHECK_NEIGHBOR;
+    ni = ci + self->width + 3; CHECK_NEIGHBOR;
+    cp->visited = 1;
+    *pixSeg = cp;
+    mergePair[0] = NULL;
+    mergePair[1] = NULL;
+    if (uniqueNeighbor)
+    {
+        wshed_merge(uniqueNeighbor, cp);
+        return FPR_EXTENDED;
+    }
+    else
+    {
+        return FPR_NEW;
+    }
+}
 
 struct wshed *wshed_create(FPIX *fpix)
 {
@@ -231,7 +285,7 @@ struct wshed *wshed_create(FPIX *fpix)
     self->numPixels = self->width * self->height;
     self->queue = calloc(self->numPixels, sizeof (*self->queue));
     grod_genSortedListFromFPix(self->fpix, self->queue);
-    self->pgrid = calloc(self->numPixels, sizeof (*self->pgrid));
+    self->pgrid = calloc((self->width+2) * (self->height+2), sizeof (*self->pgrid));
     genGridCells(self->width, self->height, self->pgrid);
     return self;
 }
@@ -253,7 +307,7 @@ enum fillPixResult wshed_fill(struct wshed *self,
     if (pmr) goto RESUME;
     for (;;)
     {
-        fpr = fillPixel(self, pixSeg, mergePair);
+        fpr = fillNonborderPixel(self, pixSeg, mergePair);
         switch (fpr)
         {
         case FPR_NEEDSMERGE:
@@ -275,6 +329,8 @@ RESUME:
                     goto ADVANCE;
                 case MR_YIELD:
                     break;
+				case MR_STOP:
+					return FPR_DONE;
                 default:
                     fprintf(stderr, "Invalid merge result: %d\n", (int)*pmr);
                     abort();

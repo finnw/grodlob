@@ -20,7 +20,8 @@ enum mergeResult
     MR_EDGE,        // Pixel should be retained as an edge
     MR_RETRY,       // Merge strategy has changed something; try again
     MR_SKIP,        // Don't modify this pixel; Advance to the next one
-    MR_YIELD        // Defer to caller
+    MR_YIELD,       // Defer to caller
+    MR_STOP			// Stop processing
 };
 
 struct pixel

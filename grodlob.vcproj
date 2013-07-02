@@ -63,6 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="lua.lib libtesseract302d.lib liblept168d.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)lib\&quot;"
 				ModuleDefinitionFile="$(ProjectDir)grodlob.def"
@@ -118,12 +119,18 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				Optimization="3"
+				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)luajit-2.0\src\&quot;;&quot;$(ProjectDir)include\&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GRODLOB_EXPORTS"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="false"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -148,6 +155,8 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				OptimizeForWindows98="0"
+				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -249,6 +258,75 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+		</Filter>
+		<Filter
+			Name="Lua script files"
+			Filter="lua"
+			>
+			<File
+				RelativePath=".\ffilib.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\ffiu.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\glue.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\HeapQ.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\liblept.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\NBC.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\Ocr.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\pixelsort_cdef.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\point16.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\prebuild.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\Segment.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\stddef_h.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\systypes_h.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\UnionFind.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\Watershed.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\xmath.lua"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>
