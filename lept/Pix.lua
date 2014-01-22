@@ -283,6 +283,10 @@ function Pix:setPixel(x, y, value)
   clLept.pixSetPixel(toPPix(self), x, y, value)
 end
 
+function Pix:setRGBPixel(x, y, r, g, b)
+  clLept.pixSetRGBPixel(toPPix(self), x, y, r, g, b)
+end
+
 Pix.toPPix = toPPix
 
 function Pix:writePng(filename, gamma)
